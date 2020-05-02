@@ -1,2 +1,0 @@
-Name,InstanceID,ServerID,InstanceType,ServerType,ServerTags,PublicDNS,PublicIP,PrivateIP,PrivateDNS,RegionID,VPC,Platform,OsVersion,ClusterID,CompanyID,IsServerRunning,CreatedDate,IsTerminated,Status,Message
-i-05bfc0fe932a08e26,i-05bfc0fe932a08e26,89,t2.micro,Hybrid,"""""",,13.229.123.23,10.0.0.58,ip-10-0-0-58.ap-southeast-1.compute.internal,10,vpc-0787773f9e63cbef7,Windows,,1,1,Yes,2020-04-29 16:08:18,No,Updated,Already exists in records

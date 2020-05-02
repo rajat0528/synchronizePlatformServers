@@ -4,7 +4,7 @@ const awsHelper = require('./../../helper/awsHelper');
 const azureHelper = require('./../../helper/azureHelper');
 const gcpHelper = require('./../../helper/gcpHelper');
 const queries = require('./../../services/shared/sqlQueries');
-const sharedFunction = require('./../../services/shared/SharedFunction'); 
+const sharedFunction = require('./../../services/shared/sharedFunction'); 
 const uuidv1 = require("uuid/v4");
 
 const capitalizeString = (s) => {
@@ -52,29 +52,30 @@ class ServerFunction {
                                 } 
 
                                 let response = await ServerFunction.mailToUser(serversList.servers,cluster);
-                                if(response.status) console.log("Email has been sent to user successfully.");
-                                else console.log("Error: " + response.error);
+                                await mysql.query(await queries.updateData({SyncStatus : 'No'},{ID : cluster.ID},'Clusters'),conn);
+                                if(response.status) return {status:false,data:'Email has been sent to user successfully.',error:''};
+                                else return {status:false,data:'',error:response.error};
                                  
                             }else{                               
 
                                 let response = await ServerFunction.mailToUser([],cluster,("Error while fetching credentials for "+cluster.Name+" cluster. Error: " + cred.error));
-                                if(response.status) console.log("Email has been sent to user successfully.");
-                                else console.log("Error: " + response.error);
+                                await mysql.query(await queries.updateData({SyncStatus : 'No'},{ID : cluster.ID},'Clusters'),conn);
+                                if(response.status) return {status:false,data:'Email has been sent to user successfully.',error:''};
+                                else return {status:false,data:'',error:response.error};
                             }
                             
-                            await mysql.query(await queries.updateData({SyncStatus : 'No'},{ID : cluster.ID},'Clusters'),conn);
                         }
                         
                     }else{
-                        console.log("No clusters are active for sync");
+                        return {status:true,data:'No clusters are active for sync',error:''};
                     }
                 }catch(error){
-                    console.log(error);
+                    return {status:false,data:'',error:error}
                 }
             }
 
         }catch(error){
-            console.log(error);
+            return {status:false,data:'',error:error}
         }
     }
  
