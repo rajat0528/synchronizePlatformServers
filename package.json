@@ -1,0 +1,29 @@
+{
+  "name": "sync_servers",
+  "version": "1.0.0",
+  "description": "Synnhronozaton of platform servers(AWS,Azure,Google Cloud)",
+  "main": "app.js",
+  "scripts": {
+    "start": "node server",
+    "dev": "nodemon server"
+  },
+  "author": "InfraGuard Software Services",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.17.1",
+    "mysql2": "^2.1.0",
+    "node-datetime": "^2.1.2",
+    "aws-sdk": "^2.600.0",
+    "gtoken": "^2.3.2",
+    "axios": "^0.19.2",
+    "csv-writer": "^1.2.0",
+    "email-templates": "^6.0.0",
+    "ejs": "^2.6.1",
+    "serverless-http": "^2.3.0",
+    "serverless-dotenv-plugin": "^2.3.2",
+    "uuid": "^3.3.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.3"
+  }
+}
