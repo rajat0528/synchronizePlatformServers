@@ -2,7 +2,7 @@ const awsHelper = require('./../../helper/awsHelper');
 const azureHelper = require('./../../helper/azureHelper');
 const gcpHelper = require('./../../helper/gcpHelper');
 const createCsvWriter  = require('csv-writer').createObjectCsvWriter;
-require('dotenv').config();
+const env = require('./../../loadenv').getEnvVar();
 const fs = require("fs");
 const path = require("path");
 const basePath = path.dirname(require.main.filename);
@@ -74,7 +74,7 @@ class SharedFunction {
         return new Promise(function (resolve, reject) {
 			
 			let csvData = mailData.data;
-            let _dir = (process.env.PRODUCTION_DEPLOYMENT == "true")?(process.env.FUNCTION_DEFAULT_PATH + "/output"):(basePath + "/output");
+            let _dir = env.FUNCTION_DEFAULT_PATH + "/output";
 			if (!fs.existsSync(_dir)) fs.mkdirSync(_dir);
 			
 			let header = [];

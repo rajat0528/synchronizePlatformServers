@@ -14,24 +14,25 @@ const capitalizeString = (s) => {
 
 class ServerFunction {	
 
-    static async syncActiveClusters(){ 
+    static async syncActiveClusters(clusterID=''){ 
 
         try{	
 
             let [sql, cred, serversList, agentServers]   =   ['', '', '', ''];
 			
 			let connection = await mysql.connect();
+			console.log(connection);
 			if(connection.status){
                 let conn = connection.connection;
                 
                 try{                   
-                    let clusters = await mysql.query(await queries.getActiveSyncStatus(),conn);
+                    let clusters = await mysql.query(await queries.getActiveSyncStatus(clusterID),conn);console.log(clusters);
                     if(clusters && clusters.length > 0){
 
                         for (let cluster of clusters) {
 
                             //fetch credentials by platform
-                            cred = await sharedFunction.getClusterCredentials(cluster,cluster.ProviderID);                         
+                            cred = await sharedFunction.getClusterCredentials(cluster,cluster.ProviderID);console.log(cred);
                             if(cred && cred.status){
 
                                 //AWS servers
@@ -41,8 +42,9 @@ class ServerFunction {
  
                                 //Azure servers
                                 if(cluster.ProviderID == 2){
-                                    agentServers = await ServerFunction.hybridClusterInstances(cluster,conn); 
+                                    agentServers = await ServerFunction.hybridClusterInstances(cluster,conn); console.log("agentServers",agentServers);
                                     serversList = await ServerFunction.serverListAzure(cred.credential,cluster,agentServers.servers,conn);
+									console.log("serversList",serversList);
                                 }
 
                                 //Google Cloud servers
@@ -51,21 +53,31 @@ class ServerFunction {
                                     serversList = await ServerFunction.serverListGCP(cred.credential,cred.gcpInfo,cluster.ProviderID,cluster.ID,cluster.CompanyID,agentServers.servers,conn);                                     
                                 } 
 
-                                let response = await ServerFunction.mailToUser(serversList.servers,cluster);
-                                await mysql.query(await queries.updateData({SyncStatus : 'No'},{ID : cluster.ID},'Clusters'),conn);
-                                if(response.status) return {status:false,data:'Email has been sent to user successfully.',error:''};
-                                else return {status:false,data:'',error:response.error};
+								await mysql.query(await queries.updateData({SyncStatus : 'No'},{ID : cluster.ID},'Clusters'),conn);
+								 
+								let response = '';
+								console.log(serversList.status);
+								if(serversList.status){console.log("yes");
+									response = await ServerFunction.mailToUser(serversList.servers,cluster);
+								}else{console.log("no");
+									response = await ServerFunction.mailToUser([],cluster,(serversList.error));
+								}
+                                
+                                if(response.status) console.log("Email has been sent to user successfully. Cluster " + cluster.Name);
+                                else console.log("Error occurred while sending an email. Cluster " + cluster.Name + " Error: " + response.error);
                                  
                             }else{                               
 
                                 let response = await ServerFunction.mailToUser([],cluster,("Error while fetching credentials for "+cluster.Name+" cluster. Error: " + cred.error));
                                 await mysql.query(await queries.updateData({SyncStatus : 'No'},{ID : cluster.ID},'Clusters'),conn);
-                                if(response.status) return {status:false,data:'Email has been sent to user successfully.',error:''};
-                                else return {status:false,data:'',error:response.error};
+                                if(response.status) console.log("Email has been sent to user successfully. Cluster " + cluster.Name);
+                                else console.log("Error occurred while sending an email. Cluster " + cluster.Name + " Error: " + response.error);
                             }
                             
                         }
                         
+						return {status:true,data:'Clusters have been successfully scanned.',error:''};
+						
                     }else{
                         return {status:true,data:'No clusters are active for sync',error:''};
                     }
@@ -81,8 +93,9 @@ class ServerFunction {
  
     static async mailToUser(serversList=[],cluster,errorMessage=''){
         try{
+			console.log("=====1",serversList);console.log("=====2",cluster);console.log("=====3",errorMessage);
             let mailData	=	{
-                subject 		: 	(serversList.length)?("Congrats! Your servers have been onboarded successfully. Cluster Name: " + cluster.Name):("No servers are not onboarded. Cluster Name: " + cluster.Name),
+                subject 		: 	(serversList.length)?("Congrats! Your servers have been onboarded successfully. Cluster Name: " + cluster.Name):("Servers are not onboarded. Cluster Name: " + cluster.Name),
                 filename 		: 	"servers_onboarded_"+dateTimeHelper.getDateTime(),
                 data			:	serversList,
                 emails			:	cluster.EmailAddress,
@@ -92,13 +105,13 @@ class ServerFunction {
                     date	        :	dateTimeHelper.getCurrentDate(),
                     errorMessage    :   errorMessage
                 }
-            };	
-            let response = await sharedFunction.manageCSV(mailData);
+            };	console.log("mailData",mailData);
+            let response = await sharedFunction.manageCSV(mailData);console.log("mailresponse",response);
             if(response.status) return {status:true,error:''}
             else return {status:false,error:'Error while sending an email'}
 
-        }catch(error){
-            return {status:false,error:error.message}
+        }catch(error){console.log("error",error);
+            return {status:false,error:error}
         }
     }
 
@@ -133,9 +146,14 @@ class ServerFunction {
                                 serversList.push(entries);                              
                             }
                         }                  
-                    }                        
-                    serversList = serversList.filter(function(el) {  return el.hasOwnProperty('ComputerName') && el.ComputerName != '';  })
-                    return {status:true,servers:serversList,error:''}
+                    }    
+					console.log(serversList);
+					if(serversList.length){
+						serversList = serversList.filter(function(el) {  return el.hasOwnProperty('ComputerName') && el.ComputerName != '';  })
+						return {status:true,servers:serversList,error:''}
+					}else{
+						return {status:false,servers:'',error:'No servers in system manager for role ' + cluster.RoleARN}
+					}                    
                 }
             }else{
                 return {status:false,servers:'',error:"Error while fetching credentials for"+cluster.Name+" cluster. Error: " + cred.error}
@@ -206,10 +224,15 @@ class ServerFunction {
                         }
                     }                    
                 }
-
-                //Update servers(Terminated = Yes)
-                let response = await ServerFunction.manageTerminatedServers(serversList,clusterID,companyID,conn);
-                if(response.status) return {status:true,servers:response.servers,error:''}
+				
+				if(serversList.length){
+					//Update servers(Terminated = Yes)
+					let response = await ServerFunction.manageTerminatedServers(serversList,clusterID,companyID,conn);
+					if(response.status) return {status:true,servers:response.servers,error:''}
+				}else{
+					return {status:false,servers:'',error:'No servers in this cluster.'}
+				}				
+                
             }
         }catch(error){ 
             return {status:false,servers:'',error:error.message}
@@ -221,8 +244,10 @@ class ServerFunction {
     static async serverListAzure(cred,cluster,agentServers,conn){
 
         try{
+			console.log("1111",cluster);
             let [instances,serversList,ssmServers,response]   =   ['',[],[],''];
-            instances = await azureHelper.virtualMachines(cred,cluster.SubscriptionID);  
+            instances = await azureHelper.virtualMachines(cred,cluster.SubscriptionID); 
+console.log("instancesinstances",instances);			
             if(instances && instances.length){               
                 for (let instance of instances) {    
                     let resourceGroup = (instance.id.split('/')[4]);                      
@@ -260,13 +285,18 @@ class ServerFunction {
                     };     
              
                     response = await ServerFunction.manageServerData(server,cluster.ID,cluster.CompanyID,((ssmServers.length)?ssmServers[0].InstanceId:''),instance.properties.vmId,instance.location,conn);
+					console.log("responseresponse",response);
                     if(response.status) serversList.push(response.servers[0]);                    
                 }
 
                 //Update servers(Terminated = Yes)
+				console.log("serversListserversList",serversList);
                 response = await ServerFunction.manageTerminatedServers(serversList,cluster.ID,cluster.CompanyID,conn);
+				console.log("serversLresponseresponseistserversList",response);
                 if(response.status) return {status:true,servers:response.servers,error:''}
-            }
+            }else{
+				return {status:false,servers:'',error:'No servers in this cluster.'}
+			}
 
         }catch(error){
             return {status:false,servers:'',error:error.message}
@@ -320,7 +350,9 @@ class ServerFunction {
                 //Update servers(Terminated = Yes)
                 response = await ServerFunction.manageTerminatedServers(serversList,clusterID,companyID,conn);
                 if(response.status) return {status:true,servers:response.servers,error:''}
-            }
+            }else{
+				return {status:false,servers:'',error:'No servers in this cluster.'}
+			}
 
         }catch(error){
             return {status:false,servers:'',error:error.message}

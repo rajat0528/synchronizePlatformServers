@@ -1,11 +1,11 @@
 {
   "name": "sync_servers",
   "version": "1.0.0",
-  "description": "Synnhronozaton of platform servers(AWS,Azure,Google Cloud)",
+  "description": "Synchronization of platform servers(AWS,Azure,Google Cloud)",
   "main": "app.js",
   "scripts": {
-    "start": "node server",
-    "dev": "nodemon server"
+    "start": "node app",
+    "dev": "nodemon app"
   },
   "author": "InfraGuard Software Services",
   "license": "MIT",
@@ -21,7 +21,8 @@
     "ejs": "^2.6.1",
     "serverless-http": "^2.3.0",
     "serverless-dotenv-plugin": "^2.3.2",
-    "uuid": "^3.3.2"
+    "uuid": "^3.3.2",
+    "js-yaml": "^3.13.1"
   },
   "devDependencies": {
     "nodemon": "^2.0.3"

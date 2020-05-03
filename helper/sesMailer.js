@@ -2,6 +2,7 @@ const Email = require("email-templates");
 const fs = require("fs");
 const dateTime = require('./dateTime');
 require('dotenv').config()
+const env = require('./../loadenv').getEnvVar();
 const AWS = require("aws-sdk");
 const SES = new AWS.SES({apiVersion: '2010-12-01', region : 'us-west-2' });
 const path = require("path");
@@ -12,13 +13,13 @@ let mailBody = (mail) => new Promise((resolve, reject) => {
 	//check if email is sending to multiple 
 	let emailAddresses = mail.to.split(',');        
 	
-	let mailer = "From: 'InfraGuard Software Services' <" + `${process.env.COMPANY_MAIL}` + ">\n";
+	let mailer = "From: 'InfraGuard Software Services' <" + `${env.COMPANY_MAIL}` + ">\n";
 
 	for(let i = 0, len = emailAddresses.length; i < len; i++) 
 		mailer += "To: " + emailAddresses[i] + "\n";
    
-	//mailer += "Bcc: " + `${process.env.COMPANY_MAIL}` + "\n";        
-	//emailAddresses.push(`${process.env.COMPANY_MAIL}`);
+	//mailer += "Bcc: " + `${env.COMPANY_MAIL}` + "\n";        
+	//emailAddresses.push(`${env.COMPANY_MAIL}`);
 
 	mailer += "Subject: " + mail.subject + "\n";
 	mailer += "MIME-Version: 1.0\n";
@@ -55,7 +56,7 @@ let mailBody = (mail) => new Promise((resolve, reject) => {
 		RawMessage: {
 			Data: mailer
 		},
-		Source: `${process.env.COMPANY_MAIL}`
+		Source: `${env.COMPANY_MAIL}`
 	};	
 	
 	resolve(params)
@@ -75,7 +76,7 @@ class SesHelper {
 		return new Promise(function (resolve, reject) {
 			
 			let userEmail 	=	mailerData.EmailAddress;  
-			const templateDir = (process.env.PRODUCTION_DEPLOYMENT == "true")?(process.env.LAMBDA_TASK_ROOT):(basePath) +"/email_templates/onboard_servers/serverslist";
+			const templateDir = process.env.LAMBDA_TASK_ROOT +"/email_templates/onboard_servers/serverslist";
             const email = new Email();
             email.config.views.root = SesHelper.getPath(email);
             email.config.views.options.extension = "ejs";
@@ -84,8 +85,8 @@ class SesHelper {
 				roleARN: `${mailerData.RoleARN}`, 
 				errorMessage: `${mailerData.ErrorMessage}`, 
                 date: `${mailerData.Date}`, 
-                url: `${process.env.BASE_URL}`,
-				s3url: `${process.env.S3BUCKET}`,		
+                url: `${env.BASE_URL}`,
+				s3url: `${env.S3BUCKET}`,		
                 year: `${dateTime.getCurrentDateWithoutTime().split("-")[0]}`
 			}).then((emailData)=> {
 				
@@ -121,7 +122,5 @@ class SesHelper {
 	
     }
     
-  }
-
-
+}
 module.exports = SesHelper;

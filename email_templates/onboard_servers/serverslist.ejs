@@ -167,8 +167,12 @@
                                     <tr>
                                     <td align="left" style="padding: 20px; font-size: 16px; line-height: 25px; font-family: Helvetica, Arial, sans-serif; color: #777;" class="padding">
 
-                                        <h2 class="text-center" style="color: #2870ba; margin-bottom: 15px; font-size: 16px;">Servers have been onboarded successfully.</h2>
-
+                                        <% if(typeof errorMessage !== 'undefined' && errorMessage){ %> 	
+                                            <h2 class="text-center" style="color: #cc0000; margin-bottom: 15px; font-size: 16px;">Servers are not onboarded.</h2>
+                                        <% }else{ %>
+                                            <h2 class="text-center" style="color: #2870ba; margin-bottom: 15px; font-size: 16px;">Servers have been onboarded successfully.</h2>
+                                        <% } %>                                        
+                                       
                                         <div class="table-responsive" data-pattern="priority-columns">
                                             <table class="table table-bordered table-hover"> 
                                                 <thead style="display:none;">
@@ -197,9 +201,9 @@
                                                             </tr>
                                                         <% } %>   
                                                         <% if(typeof errorMessage !== 'undefined' && errorMessage){ %> 	
-                                                            <tr>
-                                                                <td><b>Error Message</b></td>
-                                                                <td><%= errorMessage %></td>
+                                                            <tr>                                                             
+                                                                <td><span style="color: #cc0000;"><b>Error Message</b></span></td>
+                                                                <td><span style="color: #cc0000;"><b><%= errorMessage %></b></span></td>
                                                             </tr>
                                                         <% } %>                                               
                                                     </tbody>                                              
