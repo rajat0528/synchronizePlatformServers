@@ -29,7 +29,7 @@ functions:
     name: ${self:provider.stage}-${self:service} # optional, Deployed Lambda name
     timeout: 900   
     environment: # add environment property
-        PRODUCTION_STAGE: ${opt:stage}   
+        APP_STAGE: ${opt:stage}   
     events: # events trigger lambda functions
       - http: # this is an API Gateway HTTP event trigger
           path: /
