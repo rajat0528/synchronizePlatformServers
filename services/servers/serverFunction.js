@@ -295,7 +295,8 @@ console.log("instancesinstances",instances);
 				console.log("serversLresponseresponseistserversList",response);
                 if(response.status) return {status:true,servers:response.servers,error:''}
             }else{
-				return {status:false,servers:'',error:'No servers in this cluster.'}
+                response = await ServerFunction.manageTerminatedServers(serversList,cluster.ID,cluster.CompanyID,conn);
+				if(response.status) return {status:false,servers:'',error:'No servers in this cluster.'}
 			}
 
         }catch(error){
@@ -351,7 +352,8 @@ console.log("instancesinstances",instances);
                 response = await ServerFunction.manageTerminatedServers(serversList,clusterID,companyID,conn);
                 if(response.status) return {status:true,servers:response.servers,error:''}
             }else{
-				return {status:false,servers:'',error:'No servers in this cluster.'}
+                response = await ServerFunction.manageTerminatedServers(serversList,clusterID,companyID,conn);
+				if(response.status) return {status:false,servers:'',error:'No servers in this cluster.'}
 			}
 
         }catch(error){
@@ -449,7 +451,9 @@ console.log("instancesinstances",instances);
                 delete el.IsTerminated;
                 delete el.OtherRegionName;
             }); 
-        }
+        }else{
+			await mysql.query(await queries.updateServerTerminated(clusterID,companyID,''),conn);
+		}
 
         return {status:true,servers:serversList,error:''}
     }

@@ -41,7 +41,10 @@ class SqlQueries {
 	}
 	
 	static async updateServerTerminated (clusterID,companyID,serverID) {
-		let query = `UPDATE Servers SET IsTerminated='Yes',IsActive='No' WHERE ID NOT IN(${serverID}) AND ClusterID = '${clusterID}' And CompanyID = '${companyID}' `;
+		let [condition] = [''];
+		if(serverID) condition = " And ID NOT IN '"+serverID+"'";
+
+		let query = `UPDATE Servers SET IsTerminated='Yes',IsActive='No' WHERE ClusterID = '${clusterID}' And CompanyID = '${companyID}' ${condition} `;
 		(env.PRODUCTION_DEPLOYMENT == false) ? (console.log(query)) : '';
 		return query;
     }
